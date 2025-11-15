@@ -10,6 +10,10 @@ class AddWishState(StatesGroup):
     canceling = State()
 
 
+class MyWishListState(StatesGroup):
+    viewing_wishlist = State()
+
+
 class DeleteWishState(StatesGroup):
     delete = State()
 
