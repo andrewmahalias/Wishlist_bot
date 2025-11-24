@@ -1,8 +1,7 @@
-# app/middlewares/auth.py
 from typing import Callable, Dict, Any, Awaitable
+
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, Message
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.crud import get_or_create_user
 
