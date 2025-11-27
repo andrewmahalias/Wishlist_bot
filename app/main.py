@@ -7,7 +7,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.config import BOT_TOKEN
 from app.database.base import init_db
-from app.handlers import start
+from app.handlers import start, my_wishlist
 from app.middlewares.auth import AuthMiddleware
 from app.middlewares.db import DbSessionMiddleware
 
@@ -25,7 +25,7 @@ async def main():
     dp.message.middleware(AuthMiddleware())
 
     dp.include_router(start.router)
-    # dp.include_router(my_wishlist.router)
+    dp.include_router(my_wishlist.router)
     # dp.include_router(family_wishlist.router)
 
     await bot.delete_webhook(drop_pending_updates=True)

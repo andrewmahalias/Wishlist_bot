@@ -12,6 +12,7 @@ async def cmd_start(message: Message, user: User):
     await message.answer(
         f"👋 Привіт, {user.name}!\n\n"
         f"Я допоможу тобі зберігати список бажань.\n\n"
-        f"Доступні команди:\n"
-        f"/add - додати бажання\n"
+        f"Обери в Меню відповідну команду\n"
+        f"👉 /my_wishlist - переглянути мої бажання\n"
+        f"👉 /family_wishlist - переглянути бажання сім'ї\n"
     )
