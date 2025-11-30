@@ -1,4 +1,9 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+from typing import List
+
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardMarkup, \
+    InlineKeyboardButton
+
+from app.models.models import Wish
 
 
 def my_wishlist_menu():
@@ -12,3 +17,38 @@ def my_wishlist_menu():
 
 
 remove_keyboard = ReplyKeyboardRemove()
+
+
+def get_wishes_keyboard(wishes: List[Wish]) -> InlineKeyboardMarkup:
+    """Клавіатура зі списком бажань"""
+    buttons = []
+
+    for wish in wishes:
+        title = wish.title if len(wish.title) <= 35 else wish.title[:32] + "..."
+
+        buttons.append([
+            InlineKeyboardButton(
+                text=title,
+                callback_data=f"wish:{wish.id}"
+            )
+        ])
+
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_wishes_details_keyboard(wish: Wish) -> InlineKeyboardMarkup:
+    """Клавіатура з деталями бажання"""
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text="✏ Редагувати",
+                callback_data=f"edit:{wish.id}"
+            ),
+            InlineKeyboardButton(
+                text="🗑 Видалити",
+                callback_data=f"delete:{wish.id}"
+            )
+        ]
+    ]
+
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
