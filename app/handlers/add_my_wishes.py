@@ -1,5 +1,4 @@
 from aiogram import Router, F
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,16 +10,9 @@ from app.states.wishlist_states import AddWishState
 router = Router()
 
 
-@router.message(Command("my_wishlist"))
-async def cmd_menu(message: Message):
-    await message.answer(
-        "Виберіть дію:",
-        reply_markup=my_wishlist_menu()
-    )
-
-
 @router.message(F.text == "➕ Додати бажання")
 async def start_add_wish(message: Message, state: FSMContext):
+    await state.clear()
     await state.set_state(AddWishState.title)
     await message.answer(
         "📝 Крок 1/4: Введи назву бажання:",
@@ -70,7 +62,6 @@ async def process_price(message: Message, state: FSMContext, session: AsyncSessi
 
     session.add(wish)
     await session.commit()
-
     await state.clear()
     await message.answer(
         f"✅ Бажання додано!\n\n"

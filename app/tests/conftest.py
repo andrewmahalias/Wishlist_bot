@@ -10,14 +10,14 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from app.database.base import Base
 from app.middlewares.auth import AuthMiddleware
 from app.middlewares.db import DbSessionMiddleware
-from app.handlers.start import router as start_router
+from app.handlers.commands import router as start_router
+from app.models.models import User
 
 
-@pytest.fixture
-def fsm_context():
+@pytest_asyncio.fixture
+async def fsm_context():
     storage = MemoryStorage()
-    context = FSMContext(storage=storage, key=123)
-    return context
+    return FSMContext(storage=storage, key="test_user")
 
 
 @pytest.fixture
@@ -73,3 +73,12 @@ def make_start_update():
             from_user=TgUser(id=777, is_bot=False, first_name="Andrew")
         )
     )
+
+
+@pytest_asyncio.fixture
+async def db_user(session_factory):
+    async with session_factory() as session:
+        user = User(id=1, telegram_id=777, name="Andrew")
+        session.add(user)
+        await session.commit()
+        return user
