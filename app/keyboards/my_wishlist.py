@@ -15,12 +15,10 @@ def my_wishlist_menu():
         resize_keyboard=True
     )
 
-
 remove_keyboard = ReplyKeyboardRemove()
 
 
 def get_wishes_keyboard(wishes: List[Wish]) -> InlineKeyboardMarkup:
-    """Клавіатура зі списком бажань"""
     buttons = []
 
     for wish in wishes:
@@ -37,7 +35,6 @@ def get_wishes_keyboard(wishes: List[Wish]) -> InlineKeyboardMarkup:
 
 
 def get_wishes_details_keyboard(wish: Wish) -> InlineKeyboardMarkup:
-    """Клавіатура з деталями бажання"""
     buttons = [
         [
             InlineKeyboardButton(
@@ -46,7 +43,7 @@ def get_wishes_details_keyboard(wish: Wish) -> InlineKeyboardMarkup:
             ),
             InlineKeyboardButton(
                 text="🗑 Видалити",
-                callback_data=f"delete:{wish.id}"
+                callback_data=f"delete_wish:{wish.id}"
             )
         ]
     ]
