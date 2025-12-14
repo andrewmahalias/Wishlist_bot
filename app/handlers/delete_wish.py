@@ -11,7 +11,6 @@ router = Router()
 
 
 async def send_current_wishlist(callback: CallbackQuery, session: AsyncSession, user: User):
-    """Відправляє актуальний список бажань користувача"""
     result = await session.execute(select(Wish).where(Wish.user_id == user.id))
     wishes = result.scalars().all()
 

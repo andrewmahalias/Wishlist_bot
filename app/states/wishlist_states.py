@@ -14,6 +14,13 @@ class MyWishListState(StatesGroup):
     viewing_wishlist = State()
 
 
+class EditWish(StatesGroup):
+    title = State()
+    description = State()
+    link = State()
+    price = State()
+
+
 class DeleteWishState(StatesGroup):
     delete = State()
 

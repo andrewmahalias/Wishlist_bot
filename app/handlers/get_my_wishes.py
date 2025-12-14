@@ -13,7 +13,6 @@ router = Router()
 
 @router.message(F.text == "📋 Мої бажання")
 async def show_my_wishes(message: Message, session: AsyncSession, user: User, state: FSMContext):
-    """Показати список бажань з кнопками"""
     await state.clear()
     await state.set_state(MyWishListState.viewing_wishlist)
     result = await session.execute(
@@ -62,7 +61,7 @@ async def show_wish_details(callback: CallbackQuery, session: AsyncSession, user
         text += f"🔗 <a href='{wish.link}'>Перейти за посиланням</a>\n\n"
 
     if wish.price:
-        text += f"💰 {wish.price} грн"
+        text += f"💰 €{wish.price}"
 
     await callback.message.answer(text, reply_markup=get_wishes_details_keyboard(wish), parse_mode="HTML")
     await callback.answer()

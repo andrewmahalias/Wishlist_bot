@@ -6,6 +6,14 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemo
 from app.models.models import Wish
 
 
+def navigation_keyboard(skip: bool = True) -> InlineKeyboardMarkup:
+    buttons = []
+    if skip:
+        buttons.append([InlineKeyboardButton("⏭ Пропустити", callback_data="skip_field")])
+    buttons.append([InlineKeyboardButton("🔙 Назад", callback_data="back_field")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
 def my_wishlist_menu():
     return ReplyKeyboardMarkup(
         keyboard=[
@@ -14,6 +22,7 @@ def my_wishlist_menu():
         ],
         resize_keyboard=True
     )
+
 
 remove_keyboard = ReplyKeyboardRemove()
 
