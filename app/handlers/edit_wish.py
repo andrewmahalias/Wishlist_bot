@@ -1,11 +1,12 @@
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message, User
+from aiogram.types import CallbackQuery, Message
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.keyboards.my_wishlist import my_wishlist_menu
-from app.models.models import Wish
+from app.keyboards.skip_back_keyboard import get_skip_back_keyboard, get_back_keyboard
+from app.models.models import Wish, User
 from app.states.wishlist_states import EditWish
 
 router = Router()
@@ -14,7 +15,9 @@ router = Router()
 @router.callback_query(F.data.startswith("edit:"))
 async def start_edit(callback: CallbackQuery, state: FSMContext, session: AsyncSession, user: User):
     wish_id = int(callback.data.split(":")[1])
-    result = await session.execute(select(Wish).where(Wish.id == wish_id, Wish.user_id == user.id))
+    result = await session.execute(
+        select(Wish).where(Wish.id == wish_id, Wish.user_id == user.id)
+    )
     wish = result.scalar_one_or_none()
 
     if not wish:
@@ -22,40 +25,82 @@ async def start_edit(callback: CallbackQuery, state: FSMContext, session: AsyncS
         await callback.answer()
         return
 
-    await state.update_data(wish_id=wish.id)
+    await state.update_data(
+        wish_id=wish.id,
+        original_title=wish.title,
+        original_description=wish.description,
+        original_link=wish.link,
+        original_price=wish.price
+    )
     await state.set_state(EditWish.title)
-    await callback.message.answer(f"Редагуємо бажання: <b>{wish.title}</b>\n\nВведи нову назву:")
+    await callback.message.answer(
+        f"✏️ Редагуємо бажання: <b>{wish.title}</b>\n\nВведи нову назву:",
+        reply_markup=get_skip_back_keyboard()
+    )
     await callback.answer()
 
 
 @router.message(EditWish.title)
 async def edit_title(message: Message, state: FSMContext):
+    if message.text in ["🔙 Назад", "❌ Скасувати", "⏭ Пропустити"]:
+        return
+
     await state.update_data(title=message.text)
     await state.set_state(EditWish.description)
-    await message.answer("Введи новий опис бажання:")
+    await message.answer(
+        "📝 Введи новий опис:",
+        reply_markup=get_skip_back_keyboard()
+    )
 
 
 @router.message(EditWish.description)
 async def edit_description(message: Message, state: FSMContext):
+    if message.text in ["🔙 Назад", "❌ Скасувати", "⏭ Пропустити"]:
+        return
+
     await state.update_data(description=message.text)
     await state.set_state(EditWish.link)
-    await message.answer("Введи нове посилання (або '-' якщо немає):")
+    await message.answer(
+        "🔗 Введи нове посилання:",
+        reply_markup=get_skip_back_keyboard()
+    )
 
 
 @router.message(EditWish.link)
 async def edit_link(message: Message, state: FSMContext):
-    link = message.text if message.text != "-" else None
-    await state.update_data(link=link)
+    if message.text in ["🔙 Назад", "❌ Скасувати", "⏭ Пропустити"]:
+        return
+
+    await state.update_data(link=message.text)
     await state.set_state(EditWish.price)
-    await message.answer("Введи нову ціну (або '-' якщо не вказано):")
+    await message.answer(
+        "💰 Введи нову ціну:",
+        reply_markup=get_skip_back_keyboard()
+    )
 
 
 @router.message(EditWish.price)
-async def edit_price(message: Message, state: FSMContext, session: AsyncSession, user: User):
+async def edit_price(message: Message, state: FSMContext, session: AsyncSession = None, user: User = None):
+    if message.text in ["🔙 Назад", "❌ Скасувати", "⏭ Пропустити"]:
+        return
+
+    try:
+        price = float(message.text.replace(',', '.'))
+    except ValueError:
+        await message.answer("❌ Введи число:")
+        return
+    await state.update_data(price=price)
+    await finalize_edit_wish(message, state, session, user)
+
+
+async def finalize_edit_wish(message: Message, state: FSMContext, session: AsyncSession, user: User):
+    """Збереження змін"""
     data = await state.get_data()
     wish_id = data["wish_id"]
 
-    result = await session.execute(select(Wish).where(Wish.id == wish_id, Wish.user_id == user.id))
+    result = await session.execute(
+        select(Wish).where(Wish.id == wish_id, Wish.user_id == user.id)
+    )
     wish = result.scalar_one_or_none()
 
     if not wish:
@@ -66,13 +111,13 @@ async def edit_price(message: Message, state: FSMContext, session: AsyncSession,
     wish.title = data.get("title")
     wish.description = data.get("description")
     wish.link = data.get("link")
-    try:
-        wish.price = float(message.text) if message.text != "-" else None
-    except ValueError:
-        wish.price = None
+    wish.price = data.get("price")
 
     session.add(wish)
     await session.commit()
 
-    await message.answer("Бажання успішно оновлено ✅", reply_markup=my_wishlist_menu())
     await state.clear()
+    await message.answer(
+        "✅ Бажання оновлено!",
+        reply_markup=my_wishlist_menu()
+    )

@@ -1,7 +1,7 @@
 from aiogram import Router
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardRemove
 
 from app.keyboards.my_wishlist import my_wishlist_menu
 from app.models.models import User
@@ -17,7 +17,8 @@ async def cmd_start(message: Message, user: User, state: FSMContext):
         f"Я допоможу тобі зберігати список бажань.\n\n"
         f"Обери в Меню відповідну команду\n"
         f"👉 /my_wishlist - переглянути мої бажання\n"
-        f"👉 /family_wishlist - переглянути бажання сім'ї\n"
+        f"👉 /family_wishlist - переглянути бажання сім'ї\n",
+        reply_markup=ReplyKeyboardRemove()
     )
 
 

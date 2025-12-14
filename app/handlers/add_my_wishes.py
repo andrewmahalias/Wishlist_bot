@@ -1,9 +1,10 @@
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.keyboards.my_wishlist import my_wishlist_menu
+from app.keyboards.skip_back_keyboard import get_back_keyboard, get_skip_back_keyboard
 from app.models.models import User, Wish
 from app.states.wishlist_states import AddWishState
 
@@ -16,58 +17,84 @@ async def start_add_wish(message: Message, state: FSMContext):
     await state.set_state(AddWishState.title)
     await message.answer(
         "📝 Крок 1/4: Введи назву бажання:",
-        reply_markup=ReplyKeyboardRemove()
+        reply_markup=get_back_keyboard()
     )
 
 
 @router.message(AddWishState.title)
 async def process_title(message: Message, state: FSMContext):
+    if message.text in ["🔙 Назад", "❌ Скасувати", "⏭ Пропустити"]:
+        return
     await state.update_data(title=message.text)
     await state.set_state(AddWishState.description)
-    await message.answer("📝 Крок 2/4: Додай опис:")
+    await message.answer(
+        "📝 Крок 2/4: Додай опис:",
+        reply_markup=get_skip_back_keyboard()
+    )
 
 
 @router.message(AddWishState.description)
 async def process_description(message: Message, state: FSMContext):
+    if message.text in ["🔙 Назад", "❌ Скасувати", "⏭ Пропустити"]:
+        return
     await state.update_data(description=message.text)
     await state.set_state(AddWishState.link)
-    await message.answer("🔗 Крок 3/4: Додай посилання:")
+    await message.answer(
+        "🔗 Крок 3/4: Додай посилання:",
+        reply_markup=get_skip_back_keyboard()
+    )
 
 
 @router.message(AddWishState.link)
 async def process_link(message: Message, state: FSMContext):
+    if message.text in ["🔙 Назад", "❌ Скасувати", "⏭ Пропустити"]:
+        return
     await state.update_data(link=message.text)
     await state.set_state(AddWishState.price)
-    await message.answer("💰 Крок 4/4: Вкажи ціну (в грн):")
+    await message.answer(
+        "💰 Крок 4/4: Вкажи ціну:",
+        reply_markup=get_skip_back_keyboard()
+    )
 
 
 @router.message(AddWishState.price)
 async def process_price(message: Message, state: FSMContext, session: AsyncSession, user: User):
+    if message.text in ["🔙 Назад", "❌ Скасувати", "⏭ Пропустити"]:
+        return
     try:
         price = float(message.text.replace(',', '.'))
     except ValueError:
-        await message.answer("❌ Введи число:")
+        await message.answer("❌ Введи число (€):")
         return
+    await state.update_data(price=price)
+    await finalize_add_wish(message, state, session, user)
 
+
+async def finalize_add_wish(message: Message, state: FSMContext, session: AsyncSession = None, user: User = None):
+    """Збереження нового бажання"""
     data = await state.get_data()
 
     wish = Wish(
         user_id=user.id,
         title=data['title'],
-        description=data['description'],
-        link=data['link'],
-        price=price,
+        description=data.get('description'),
+        link=data.get('link'),
+        price=data.get('price'),
         status='active'
     )
 
     session.add(wish)
     await session.commit()
+
     await state.clear()
-    await message.answer(
-        f"✅ Бажання додано!\n\n"
-        f"📌 {wish.title}\n"
-        f"📝 {wish.description}\n"
-        f"🔗 {wish.link}\n"
-        f"💰 {wish.price} грн",
-        reply_markup=my_wishlist_menu()
-    )
+
+    text = f"✅ Бажання додано!\n\n"
+    text += f"📌 {wish.title}\n"
+    if wish.description:
+        text += f"📝 {wish.description}\n"
+    if wish.link:
+        text += f"🔗 {wish.link}\n"
+    if wish.price:
+        text += f"💰 €{wish.price}"
+
+    await message.answer(text, reply_markup=my_wishlist_menu())
