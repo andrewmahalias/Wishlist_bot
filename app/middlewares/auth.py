@@ -4,7 +4,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, Message, CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.crud import get_or_create_user
+from app.crud.user import get_or_create_user
 
 
 class AuthMiddleware(BaseMiddleware):
