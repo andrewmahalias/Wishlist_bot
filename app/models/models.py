@@ -8,7 +8,7 @@ family_members = Table(
     Base.metadata,
     Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
     Column('family_id', Integer, ForeignKey('families.id'), primary_key=True),
-    Column('role', String(20), default='member'),  # member, admin
+    Column('role', String(20), default='member'),
     Column('joined_at', DateTime, server_default=func.now())
 )
 
@@ -35,6 +35,7 @@ class Family(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     members = relationship("User", secondary=family_members, back_populates="families")
+    wishes = relationship("Wish", back_populates="family", cascade="all, delete-orphan")
 
 
 class Wish(Base):
@@ -42,6 +43,8 @@ class Wish(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    family_id = Column(Integer, ForeignKey("families.id"), nullable=False)
+
     title = Column(String(255), nullable=False)
     description = Column(String(500))
     link = Column(String(255))
@@ -50,3 +53,4 @@ class Wish(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     user = relationship("User", back_populates="wishes")
+    family = relationship("Family", back_populates="wishes")
