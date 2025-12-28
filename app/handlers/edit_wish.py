@@ -5,9 +5,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.keyboards.my_wishlist import my_wishlist_menu
-from app.keyboards.skip_back_keyboard import get_skip_back_keyboard, get_back_keyboard
+from app.keyboards.skip_back_keyboard import get_skip_back_keyboard
 from app.models.models import Wish, User
-from app.states.wishlist_states import EditWish
+from app.states.wishlist_states import EditWishState
 
 router = Router()
 
@@ -32,7 +32,7 @@ async def start_edit(callback: CallbackQuery, state: FSMContext, session: AsyncS
         original_link=wish.link,
         original_price=wish.price
     )
-    await state.set_state(EditWish.title)
+    await state.set_state(EditWishState.title)
     await callback.message.answer(
         f"✏️ Редагуємо бажання: <b>{wish.title}</b>\n\nВведи нову назву:",
         reply_markup=get_skip_back_keyboard()
@@ -40,46 +40,46 @@ async def start_edit(callback: CallbackQuery, state: FSMContext, session: AsyncS
     await callback.answer()
 
 
-@router.message(EditWish.title)
+@router.message(EditWishState.title)
 async def edit_title(message: Message, state: FSMContext):
     if message.text in ["🔙 Назад", "❌ Скасувати", "⏭ Пропустити"]:
         return
 
     await state.update_data(title=message.text)
-    await state.set_state(EditWish.description)
+    await state.set_state(EditWishState.description)
     await message.answer(
         "📝 Введи новий опис:",
         reply_markup=get_skip_back_keyboard()
     )
 
 
-@router.message(EditWish.description)
+@router.message(EditWishState.description)
 async def edit_description(message: Message, state: FSMContext):
     if message.text in ["🔙 Назад", "❌ Скасувати", "⏭ Пропустити"]:
         return
 
     await state.update_data(description=message.text)
-    await state.set_state(EditWish.link)
+    await state.set_state(EditWishState.link)
     await message.answer(
         "🔗 Введи нове посилання:",
         reply_markup=get_skip_back_keyboard()
     )
 
 
-@router.message(EditWish.link)
+@router.message(EditWishState.link)
 async def edit_link(message: Message, state: FSMContext):
     if message.text in ["🔙 Назад", "❌ Скасувати", "⏭ Пропустити"]:
         return
 
     await state.update_data(link=message.text)
-    await state.set_state(EditWish.price)
+    await state.set_state(EditWishState.price)
     await message.answer(
         "💰 Введи нову ціну:",
         reply_markup=get_skip_back_keyboard()
     )
 
 
-@router.message(EditWish.price)
+@router.message(EditWishState.price)
 async def edit_price(message: Message, state: FSMContext, session: AsyncSession = None, user: User = None):
     if message.text in ["🔙 Назад", "❌ Скасувати", "⏭ Пропустити"]:
         return

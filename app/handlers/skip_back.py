@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.keyboards.my_wishlist import my_wishlist_menu
 from app.keyboards.skip_back_keyboard import get_skip_back_keyboard, get_back_keyboard
-from app.states.wishlist_states import AddWishState, EditWish
+from app.states.wishlist_states import AddWishState, EditWishState
 
 router = Router()
 
@@ -54,34 +54,34 @@ async def skip_step(message: Message, state: FSMContext, session: AsyncSession, 
         from app.handlers.add_my_wishes import finalize_add_wish
         await finalize_add_wish(message, state, session, user)
 
-    elif current == EditWish.title.state:
+    elif current == EditWishState.title.state:
         data = await state.get_data()
         await state.update_data(title=data.get('original_title'))
-        await state.set_state(EditWish.description)
+        await state.set_state(EditWishState.description)
         await message.answer(
             "📝 Введи новий опис:",
             reply_markup=get_skip_back_keyboard()
         )
 
-    elif current == EditWish.description.state:
+    elif current == EditWishState.description.state:
         data = await state.get_data()
         await state.update_data(description=data.get('original_description'))
-        await state.set_state(EditWish.link)
+        await state.set_state(EditWishState.link)
         await message.answer(
             "🔗 Введи нове посилання:",
             reply_markup=get_skip_back_keyboard()
         )
 
-    elif current == EditWish.link.state:
+    elif current == EditWishState.link.state:
         data = await state.get_data()
         await state.update_data(link=data.get('original_link'))
-        await state.set_state(EditWish.price)
+        await state.set_state(EditWishState.price)
         await message.answer(
             "💰 Введи нову ціну:",
             reply_markup=get_skip_back_keyboard()
         )
 
-    elif current == EditWish.price.state:
+    elif current == EditWishState.price.state:
         data = await state.get_data()
         await state.update_data(price=data.get('original_price'))
         # Викликаємо збереження
@@ -126,27 +126,27 @@ async def go_back(message: Message, state: FSMContext):
         await message.answer("❌ Скасовано", reply_markup=my_wishlist_menu())
 
     # EditWish - редагування
-    elif current == EditWish.description.state:
-        await state.set_state(EditWish.title)
+    elif current == EditWishState.description.state:
+        await state.set_state(EditWishState.title)
         await message.answer(
             "📝 Введи нову назву:",
             reply_markup=get_skip_back_keyboard()
         )
 
-    elif current == EditWish.link.state:
-        await state.set_state(EditWish.description)
+    elif current == EditWishState.link.state:
+        await state.set_state(EditWishState.description)
         await message.answer(
             "📝 Введи новий опис:",
             reply_markup=get_skip_back_keyboard()
         )
 
-    elif current == EditWish.price.state:
-        await state.set_state(EditWish.link)
+    elif current == EditWishState.price.state:
+        await state.set_state(EditWishState.link)
         await message.answer(
             "🔗 Введи нове посилання:",
             reply_markup=get_skip_back_keyboard()
         )
 
-    elif current == EditWish.title.state:
+    elif current == EditWishState.title.state:
         await state.clear()
         await message.answer("❌ Скасовано", reply_markup=my_wishlist_menu())

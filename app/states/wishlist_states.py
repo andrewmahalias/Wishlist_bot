@@ -1,20 +1,22 @@
 from aiogram.fsm.state import StatesGroup, State
 
 
+class FamilyState(StatesGroup):
+    selecting_family = State()
+
+
+class WishListState(StatesGroup):
+    viewing = State()
+
+
 class AddWishState(StatesGroup):
     title = State()
     description = State()
     link = State()
     price = State()
-    skipping = State()
-    canceling = State()
 
 
-class MyWishListState(StatesGroup):
-    viewing_wishlist = State()
-
-
-class EditWish(StatesGroup):
+class EditWishState(StatesGroup):
     title = State()
     description = State()
     link = State()
@@ -22,10 +24,10 @@ class EditWish(StatesGroup):
 
 
 class DeleteWishState(StatesGroup):
-    delete = State()
+    confirm = State()
 
 
-class FamilyViewState(StatesGroup):
+class FamilyMemberWishState(StatesGroup):
     selecting_member = State()
-    viewing_wishlist = State()
+    viewing = State()
     change_status = State()

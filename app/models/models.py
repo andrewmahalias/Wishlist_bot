@@ -43,7 +43,7 @@ class Wish(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    family_id = Column(Integer, ForeignKey("families.id"), nullable=False)
+    family_id = Column(Integer, ForeignKey("families.id"), nullable=True)
 
     title = Column(String(255), nullable=False)
     description = Column(String(500))
