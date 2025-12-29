@@ -3,6 +3,7 @@ from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
 
+from app.keyboards.family import families_kb
 from app.keyboards.my_wishlist import my_wishlist_menu
 from app.models.models import User
 
@@ -28,4 +29,12 @@ async def cmd_my_wishlist(message: Message, state: FSMContext):
     await message.answer(
         "Виберіть дію:",
         reply_markup=my_wishlist_menu()
+    )
+
+@router.message(Command("family_wishlist"))
+async def cmd_family_wishlist(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer(
+        "Виберіть дію:",
+        reply_markup=families_kb(families=[])
     )

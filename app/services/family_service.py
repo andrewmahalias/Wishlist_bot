@@ -1,4 +1,6 @@
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
+
 from app.database.base import SessionLocal as async_session
 from app.models import Family, family_members
 import secrets
@@ -41,20 +43,28 @@ async def create_family(user_id: int, name: str) -> Family:
         return family
 
 
-async def join_family(user_id: int, invite_code: str) -> Family | None:
+async def join_family(user_id: int, invite_code: str):
     async with async_session() as session:
         family = await session.scalar(
             select(Family).where(Family.invite_code == invite_code)
         )
+
         if not family:
             return None
 
-        await session.execute(
-            family_members.insert().values(
+        stmt = (
+            insert(family_members)
+            .values(
                 user_id=user_id,
                 family_id=family.id,
-                role="member"
+                role="member",
+            )
+            .on_conflict_do_nothing(
+                index_elements=["user_id", "family_id"]
             )
         )
+
+        await session.execute(stmt)
         await session.commit()
+
         return family

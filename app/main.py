@@ -7,7 +7,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.config import BOT_TOKEN
 from app.database.base import init_db
-from app.handlers import commands, add_my_wishes, get_my_wishes, delete_wish, edit_wish, skip_back
+from app.handlers import commands, add_my_wishes, get_my_wishes, delete_wish, edit_wish, skip_back, family
 from app.middlewares.auth import AuthMiddleware
 from app.middlewares.db import DbSessionMiddleware
 
@@ -33,7 +33,8 @@ async def main():
     dp.include_router(get_my_wishes.router)
     dp.include_router(delete_wish.router)
     dp.include_router(edit_wish.router)
-    # dp.include_router(family_wishlist.router)
+    dp.include_router(family.router)
+
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
