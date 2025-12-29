@@ -2,7 +2,9 @@ from aiogram.fsm.state import StatesGroup, State
 
 
 class FamilyState(StatesGroup):
-    selecting_family = State()
+    choosing = State()
+    creating = State()
+    joining = State()
 
 
 class WishListState(StatesGroup):
