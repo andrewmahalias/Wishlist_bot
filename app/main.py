@@ -27,13 +27,14 @@ async def main():
     dp.callback_query.middleware(DbSessionMiddleware())
     dp.callback_query.middleware(AuthMiddleware())
 
-    dp.include_router(skip_back.router)
     dp.include_router(commands.router)
+    dp.include_router(family.router)
+    dp.include_router(skip_back.router)
     dp.include_router(add_my_wishes.router)
     dp.include_router(get_my_wishes.router)
     dp.include_router(delete_wish.router)
     dp.include_router(edit_wish.router)
-    dp.include_router(family.router)
+
 
 
     await bot.delete_webhook(drop_pending_updates=True)

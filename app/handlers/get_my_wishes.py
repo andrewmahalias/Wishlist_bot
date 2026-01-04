@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.keyboards.my_wishlist import (
     my_wishlist_menu,
     get_wishes_keyboard,
-    get_wishes_details_keyboard,
+    get_wishes_details_keyboard, my_wishlist_menu_with_family,
 )
 from app.models.models import User, Wish
 from app.states.wishlist_states import WishListState
@@ -15,12 +15,31 @@ from app.states.wishlist_states import WishListState
 router = Router()
 
 
+@router.callback_query(F.data == "action:my_wishlist")
+async def show_my_wishlist_menu(
+        cb: CallbackQuery,
+        state: FSMContext,
+):
+    data = await state.get_data()
+    family_id = data.get("family_id")
+
+    if not family_id:
+        await cb.answer("Спочатку обери сімʼю.", show_alert=True)
+        return
+
+    await cb.message.answer(
+        "Обери дію:",
+        reply_markup=my_wishlist_menu_with_family(),
+    )
+    await cb.answer()
+
+
 @router.message(F.text == "📋 Мої бажання")
 async def show_my_wishes(
-    message: Message,
-    session: AsyncSession,
-    user: User,
-    state: FSMContext,
+        message: Message,
+        session: AsyncSession,
+        user: User,
+        state: FSMContext,
 ):
     data = await state.get_data()
     family_id = data.get("family_id")
@@ -42,7 +61,7 @@ async def show_my_wishes(
     if not wishes:
         await message.answer(
             "У цій сімʼї у тебе ще немає бажань.",
-            reply_markup=my_wishlist_menu(),
+            reply_markup=my_wishlist_menu_with_family(),
         )
         return
 
@@ -58,10 +77,10 @@ async def show_my_wishes(
     F.data.startswith("wish:")
 )
 async def show_wish_details(
-    callback: CallbackQuery,
-    session: AsyncSession,
-    user: User,
-    state: FSMContext,
+        callback: CallbackQuery,
+        session: AsyncSession,
+        user: User,
+        state: FSMContext,
 ):
     data = await state.get_data()
     family_id = data.get("family_id")

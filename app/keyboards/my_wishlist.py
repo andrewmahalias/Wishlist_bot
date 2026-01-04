@@ -24,7 +24,15 @@ def my_wishlist_menu():
     )
 
 
-remove_keyboard = ReplyKeyboardRemove()
+def my_wishlist_menu_with_family():
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="➕ Додати бажання")],
+            [KeyboardButton(text="📋 Мої бажання")],
+            [KeyboardButton(text="🏠 Сімʼя")]
+        ],
+        resize_keyboard=True
+    )
 
 
 def get_wishes_keyboard(wishes: List[Wish]) -> InlineKeyboardMarkup:

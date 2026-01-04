@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.keyboards.my_wishlist import my_wishlist_menu
+from app.keyboards.my_wishlist import my_wishlist_menu, my_wishlist_menu_with_family
 from app.keyboards.skip_back_keyboard import get_back_keyboard, get_skip_back_keyboard
 from app.models.models import User, Wish
 from app.states.wishlist_states import AddWishState
@@ -13,7 +13,20 @@ router = Router()
 
 @router.message(F.text == "➕ Додати бажання")
 async def start_add_wish(message: Message, state: FSMContext):
+    # Зберігаємо family_id перед clear
+    data = await state.get_data()
+    family_id = data.get('family_id')
+
+    if not family_id:
+        await message.answer(
+            "❌ Спочатку обери сімʼю через 🏠 Сімʼя"
+        )
+        return
+
+    # Очищаємо state але зберігаємо family_id
     await state.clear()
+    await state.update_data(family_id=family_id)
+
     await state.set_state(AddWishState.title)
     await message.answer(
         "📝 Крок 1/4: Введи назву бажання:",
@@ -73,9 +86,19 @@ async def process_price(message: Message, state: FSMContext, session: AsyncSessi
 async def finalize_add_wish(message: Message, state: FSMContext, session: AsyncSession = None, user: User = None):
     """Збереження нового бажання"""
     data = await state.get_data()
+    family_id = data.get('family_id')  # ← Отримуємо family_id зі стейту
+
+    if not family_id:
+        await message.answer(
+            "❌ Сім'я не обрана. Спочатку обери сімʼю через 🏠 Сімʼя",
+            reply_markup=my_wishlist_menu_with_family()
+        )
+        await state.clear()
+        return
 
     wish = Wish(
         user_id=user.id,
+        family_id=family_id,  # ← Додаємо family_id
         title=data['title'],
         description=data.get('description'),
         link=data.get('link'),
@@ -87,6 +110,8 @@ async def finalize_add_wish(message: Message, state: FSMContext, session: AsyncS
     await session.commit()
 
     await state.clear()
+    # Зберігаємо family_id після clear
+    await state.update_data(family_id=family_id)
 
     text = f"✅ Бажання додано!\n\n"
     text += f"📌 {wish.title}\n"
@@ -97,4 +122,4 @@ async def finalize_add_wish(message: Message, state: FSMContext, session: AsyncS
     if wish.price:
         text += f"💰 €{wish.price}"
 
-    await message.answer(text, reply_markup=my_wishlist_menu())
+    await message.answer(text, reply_markup=my_wishlist_menu_with_family())
