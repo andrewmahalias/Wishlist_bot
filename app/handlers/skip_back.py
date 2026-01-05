@@ -18,7 +18,16 @@ async def cancel_any_fsm(message: Message, state: FSMContext):
     if current is None:
         return
 
+    # Зберігаємо family_id перед очищенням
+    data = await state.get_data()
+    family_id = data.get("family_id")
+
     await state.clear()
+
+    # Повертаємо family_id
+    if family_id:
+        await state.update_data(family_id=family_id)
+
     await message.answer(
         "❌ Скасовано",
         reply_markup=my_wishlist_menu()
@@ -45,7 +54,7 @@ async def skip_step(message: Message, state: FSMContext, session: AsyncSession, 
         await state.update_data(link=None)
         await state.set_state(AddWishState.price)
         await message.answer(
-            "💰 Крок 4/4: Вкажи ціну (в грн):",
+            "💰 Крок 4/4: Вкажи ціну:",
             reply_markup=get_skip_back_keyboard()
         )
 
@@ -122,7 +131,16 @@ async def go_back(message: Message, state: FSMContext):
         )
 
     elif current == AddWishState.title.state:
+        # Зберігаємо family_id перед очищенням
+        data = await state.get_data()
+        family_id = data.get("family_id")
+
         await state.clear()
+
+        # Повертаємо family_id
+        if family_id:
+            await state.update_data(family_id=family_id)
+
         await message.answer("❌ Скасовано", reply_markup=my_wishlist_menu())
 
     # EditWish - редагування
@@ -148,5 +166,14 @@ async def go_back(message: Message, state: FSMContext):
         )
 
     elif current == EditWishState.title.state:
+        # Зберігаємо family_id перед очищенням
+        data = await state.get_data()
+        family_id = data.get("family_id")
+
         await state.clear()
+
+        # Повертаємо family_id
+        if family_id:
+            await state.update_data(family_id=family_id)
+
         await message.answer("❌ Скасовано", reply_markup=my_wishlist_menu())

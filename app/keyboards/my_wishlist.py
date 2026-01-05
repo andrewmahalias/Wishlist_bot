@@ -1,6 +1,6 @@
 from typing import List
 
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardMarkup, \
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, \
     InlineKeyboardButton
 
 from app.models.models import Wish
@@ -18,18 +18,8 @@ def my_wishlist_menu():
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="➕ Додати бажання")],
-            [KeyboardButton(text="📋 Мої бажання")]
-        ],
-        resize_keyboard=True
-    )
-
-
-def my_wishlist_menu_with_family():
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="➕ Додати бажання")],
             [KeyboardButton(text="📋 Мої бажання")],
-            [KeyboardButton(text="🏠 Сімʼя")]
+            [KeyboardButton(text="🏠 Сімʼя")],
         ],
         resize_keyboard=True
     )

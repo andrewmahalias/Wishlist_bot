@@ -3,6 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.crud.family import get_family_by_id
 from app.keyboards.family import families_kb
 from app.models.models import User
 from app.services.family_service import (
@@ -32,9 +33,12 @@ async def family_menu(
 
 
 @router.callback_query(F.data.startswith("family:select:"))
-async def select_family(cb: CallbackQuery, state: FSMContext):
+async def select_family(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     family_id = int(cb.data.split(":")[-1])
     await state.update_data(family_id=family_id)
+
+    # Отримуємо сім'ю з бази
+    family = await get_family_by_id(session, family_id)
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -46,12 +50,38 @@ async def select_family(cb: CallbackQuery, state: FSMContext):
                 text="🎁 Сімейний wishlist",
                 callback_data=f"action:family_wishlist:{family_id}"
             )
+        ],
+        [
+            InlineKeyboardButton(
+                text="🔗 Запросити в сім'ю",
+                callback_data=f"family:invite:{family_id}"
+            )
         ]
     ])
 
+    # Оновлюємо inline меню з назвою сім'ї
     await cb.message.edit_text(
-        "Сім’я обрана ✅\nОбери дію:",
+        f"Сім'я «{family.name}» обрана ✅\nОбери дію:",
         reply_markup=keyboard
+    )
+    await cb.answer()
+
+
+@router.callback_query(F.data.startswith("family:invite:"))
+async def show_invite_code(cb: CallbackQuery, session: AsyncSession):
+    family_id = int(cb.data.split(":")[-1])
+
+    # Отримуємо сім'ю
+    family = await get_family_by_id(session, family_id)
+
+    # Надсилаємо код окремим повідомленням
+    await cb.message.answer(
+        f"🔗 Код запрошення в сім'ю «{family.name}»:\n\n"
+        f"━━━━━━━━━━━━━━━\n"
+        f"{family.invite_code}\n"
+        f"━━━━━━━━━━━━━━━\n\n"
+        f"Поділіться цим кодом з людьми, яких хочете запросити. "
+        f"Вони зможуть приєднатись через кнопку '🔗 Приєднатись' в меню сімей."
     )
     await cb.answer()
 

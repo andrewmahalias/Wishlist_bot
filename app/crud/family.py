@@ -113,3 +113,11 @@ async def get_family_wishes(
         .order_by(Wish.created_at.desc())
     )
     return list(result.scalars().all())
+
+async def get_family_members(session: AsyncSession, family_id: int):
+    result = await session.execute(
+        select(User)
+        .join(User.families)
+        .where(Family.id == family_id)
+    )
+    return result.scalars().all()

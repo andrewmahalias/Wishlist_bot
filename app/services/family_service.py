@@ -42,7 +42,6 @@ async def create_family(session: AsyncSession, user_id: int, name: str) -> Famil
 
 
 async def join_family(session: AsyncSession, user_id: int, invite_code: str) -> Family | None:
-    """Приєднує користувача до сім’ї за invite_code."""
     family = await session.scalar(
         select(Family).where(Family.invite_code == invite_code)
     )

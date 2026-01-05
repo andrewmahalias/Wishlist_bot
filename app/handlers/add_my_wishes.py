@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.keyboards.my_wishlist import my_wishlist_menu, my_wishlist_menu_with_family
+from app.keyboards.my_wishlist import my_wishlist_menu
 from app.keyboards.skip_back_keyboard import get_back_keyboard, get_skip_back_keyboard
 from app.models.models import User, Wish
 from app.states.wishlist_states import AddWishState
@@ -91,7 +91,7 @@ async def finalize_add_wish(message: Message, state: FSMContext, session: AsyncS
     if not family_id:
         await message.answer(
             "❌ Сім'я не обрана. Спочатку обери сімʼю через 🏠 Сімʼя",
-            reply_markup=my_wishlist_menu_with_family()
+            reply_markup=my_wishlist_menu()
         )
         await state.clear()
         return
@@ -122,4 +122,4 @@ async def finalize_add_wish(message: Message, state: FSMContext, session: AsyncS
     if wish.price:
         text += f"💰 €{wish.price}"
 
-    await message.answer(text, reply_markup=my_wishlist_menu_with_family())
+    await message.answer(text, reply_markup=my_wishlist_menu())

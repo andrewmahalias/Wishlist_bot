@@ -32,3 +32,10 @@ async def get_user_by_telegram_id(
         select(User).where(User.telegram_id == telegram_id)
     )
     return result.scalar_one_or_none()
+
+
+async def get_user_by_id(session: AsyncSession, user_id: int):
+    result = await session.execute(
+        select(User).where(User.id == user_id)
+    )
+    return result.scalar_one()

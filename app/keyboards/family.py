@@ -1,9 +1,11 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton
+
+
+def family_button():
+    return [[KeyboardButton(text="🏠 Сімʼя")]]
 
 
 def families_kb(families: list[tuple[int, str]]) -> InlineKeyboardMarkup:
-    print(f"[DEBUG] families_kb отримала families: {families}")
-    print(f"[DEBUG] Кількість сімей: {len(families)}")
 
     buttons = [
         [InlineKeyboardButton(
@@ -19,7 +21,6 @@ def families_kb(families: list[tuple[int, str]]) -> InlineKeyboardMarkup:
     ])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
-
 
 
 def family_actions_kb(family_id: int) -> InlineKeyboardMarkup:

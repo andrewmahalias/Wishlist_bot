@@ -7,7 +7,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.config import BOT_TOKEN
 from app.database.base import init_db
-from app.handlers import commands, add_my_wishes, get_my_wishes, delete_wish, edit_wish, skip_back, family
+from app.handlers import commands, add_my_wishes, get_my_wishes, delete_wish, edit_wish, skip_back, family, members
 from app.middlewares.auth import AuthMiddleware
 from app.middlewares.db import DbSessionMiddleware
 
@@ -29,6 +29,7 @@ async def main():
 
     dp.include_router(commands.router)
     dp.include_router(family.router)
+    dp.include_router(members.router)
     dp.include_router(skip_back.router)
     dp.include_router(add_my_wishes.router)
     dp.include_router(get_my_wishes.router)
