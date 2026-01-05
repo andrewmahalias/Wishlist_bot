@@ -116,7 +116,11 @@ async def finalize_edit_wish(message: Message, state: FSMContext, session: Async
     session.add(wish)
     await session.commit()
 
+    # Очищаємо тільки дані редагування, зберігаючи family_id
+    family_id = data.get("family_id")
     await state.clear()
+    await state.update_data(family_id=family_id)
+
     await message.answer(
         "✅ Бажання оновлено!",
         reply_markup=my_wishlist_menu()

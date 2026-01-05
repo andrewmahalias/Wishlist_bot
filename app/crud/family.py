@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
-from app.models import Family, family_members, User
+from app.models import Family, family_members, User, Wish
 
 
 async def create_family(
@@ -102,3 +102,22 @@ async def delete_family(
 
     await session.delete(family)
     await session.commit()
+
+async def get_family_wishes(
+    session: AsyncSession,
+    family_id: int,
+) -> list[Wish]:
+    result = await session.execute(
+        select(Wish)
+        .where(Wish.family_id == family_id)
+        .order_by(Wish.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+async def get_family_members(session: AsyncSession, family_id: int):
+    result = await session.execute(
+        select(User)
+        .join(User.families)
+        .where(Family.id == family_id)
+    )
+    return result.scalars().all()

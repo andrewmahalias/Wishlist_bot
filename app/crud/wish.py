@@ -3,15 +3,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Wish
 
+
 async def create_wish(
-    session: AsyncSession,
-    *,
-    user_id: int,
-    family_id: int,
-    title: str,
-    description: str | None = None,
-    link: str | None = None,
-    price: float | None = None,
+        session: AsyncSession,
+        *,
+        user_id: int,
+        family_id: int,
+        title: str,
+        description: str | None = None,
+        link: str | None = None,
+        price: float | None = None,
 ) -> Wish:
     wish = Wish(
         user_id=user_id,
@@ -28,42 +29,29 @@ async def create_wish(
 
 
 async def get_user_wishlist(
-    session: AsyncSession,
-    *,
-    user_id: int,
-    family_id: int,
+        session: AsyncSession,
+        *,
+        user_id: int,
+        family_id: int | None = None,
 ) -> list[Wish]:
-    result = await session.execute(
-        select(Wish).where(
-            Wish.user_id == user_id,
-            Wish.family_id == family_id,
-        )
-    )
+    query = select(Wish).where(Wish.user_id == user_id)
+
+    if family_id is not None:
+        query = query.where(Wish.family_id == family_id)
+
+    result = await session.execute(query)
     return list(result.scalars().all())
 
-async def get_user_wishlist(
-    session: AsyncSession,
-    *,
-    user_id: int,
-    family_id: int,
-) -> list[Wish]:
-    result = await session.execute(
-        select(Wish).where(
-            Wish.user_id == user_id,
-            Wish.family_id == family_id,
-        )
-    )
-    return list(result.scalars().all())
 
 async def update_wish(
-    session: AsyncSession,
-    *,
-    wish_id: int,
-    family_id: int,
-    title: str | None = None,
-    description: str | None = None,
-    link: str | None = None,
-    price: float | None = None,
+        session: AsyncSession,
+        *,
+        wish_id: int,
+        family_id: int,
+        title: str | None = None,
+        description: str | None = None,
+        link: str | None = None,
+        price: float | None = None,
 ) -> None:
     values = {
         k: v for k, v in {
@@ -88,11 +76,12 @@ async def update_wish(
     )
     await session.commit()
 
+
 async def delete_wish(
-    session: AsyncSession,
-    *,
-    wish_id: int,
-    family_id: int,
+        session: AsyncSession,
+        *,
+        wish_id: int,
+        family_id: int,
 ) -> None:
     await session.execute(
         delete(Wish).where(
@@ -101,5 +90,3 @@ async def delete_wish(
         )
     )
     await session.commit()
-
-

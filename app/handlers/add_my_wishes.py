@@ -13,7 +13,20 @@ router = Router()
 
 @router.message(F.text == "➕ Додати бажання")
 async def start_add_wish(message: Message, state: FSMContext):
+    # Зберігаємо family_id перед clear
+    data = await state.get_data()
+    family_id = data.get('family_id')
+
+    if not family_id:
+        await message.answer(
+            "❌ Спочатку обери сімʼю через 🏠 Сімʼя"
+        )
+        return
+
+    # Очищаємо state але зберігаємо family_id
     await state.clear()
+    await state.update_data(family_id=family_id)
+
     await state.set_state(AddWishState.title)
     await message.answer(
         "📝 Крок 1/4: Введи назву бажання:",
@@ -73,9 +86,19 @@ async def process_price(message: Message, state: FSMContext, session: AsyncSessi
 async def finalize_add_wish(message: Message, state: FSMContext, session: AsyncSession = None, user: User = None):
     """Збереження нового бажання"""
     data = await state.get_data()
+    family_id = data.get('family_id')  # ← Отримуємо family_id зі стейту
+
+    if not family_id:
+        await message.answer(
+            "❌ Сім'я не обрана. Спочатку обери сімʼю через 🏠 Сімʼя",
+            reply_markup=my_wishlist_menu()
+        )
+        await state.clear()
+        return
 
     wish = Wish(
         user_id=user.id,
+        family_id=family_id,  # ← Додаємо family_id
         title=data['title'],
         description=data.get('description'),
         link=data.get('link'),
@@ -87,6 +110,8 @@ async def finalize_add_wish(message: Message, state: FSMContext, session: AsyncS
     await session.commit()
 
     await state.clear()
+    # Зберігаємо family_id після clear
+    await state.update_data(family_id=family_id)
 
     text = f"✅ Бажання додано!\n\n"
     text += f"📌 {wish.title}\n"
