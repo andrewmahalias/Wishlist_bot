@@ -17,8 +17,8 @@ def navigation_keyboard(skip: bool = True) -> InlineKeyboardMarkup:
 def my_wishlist_menu():
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="➕ Додати бажання")],
             [KeyboardButton(text="📋 Мої бажання")],
+            [KeyboardButton(text="➕ Додати бажання")],
             [KeyboardButton(text="🏠 Сімʼя")],
         ],
         resize_keyboard=True

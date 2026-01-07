@@ -1,3 +1,4 @@
+import html
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -5,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.keyboards.my_wishlist import my_wishlist_menu
-from app.keyboards.skip_back_keyboard import get_skip_back_keyboard
+from app.keyboards.skip_back_keyboard import get_skip_back_cancel_keyboard
 from app.models.models import Wish, User
 from app.states.wishlist_states import EditWishState
 
@@ -33,9 +34,14 @@ async def start_edit(callback: CallbackQuery, state: FSMContext, session: AsyncS
         original_price=wish.price
     )
     await state.set_state(EditWishState.title)
+
+    # Екрануємо назву бажання
+    safe_title = html.escape(wish.title)
+
     await callback.message.answer(
-        f"✏️ Редагуємо бажання: <b>{wish.title}</b>\n\nВведи нову назву:",
-        reply_markup=get_skip_back_keyboard()
+        f"✏️ Редагуємо бажання: <b>{safe_title}</b>\n\nВведи нову назву:",
+        parse_mode="HTML",
+        reply_markup=get_skip_back_cancel_keyboard()
     )
     await callback.answer()
 
@@ -49,7 +55,7 @@ async def edit_title(message: Message, state: FSMContext):
     await state.set_state(EditWishState.description)
     await message.answer(
         "📝 Введи новий опис:",
-        reply_markup=get_skip_back_keyboard()
+        reply_markup=get_skip_back_cancel_keyboard()
     )
 
 
@@ -62,7 +68,7 @@ async def edit_description(message: Message, state: FSMContext):
     await state.set_state(EditWishState.link)
     await message.answer(
         "🔗 Введи нове посилання:",
-        reply_markup=get_skip_back_keyboard()
+        reply_markup=get_skip_back_cancel_keyboard()
     )
 
 
@@ -75,7 +81,7 @@ async def edit_link(message: Message, state: FSMContext):
     await state.set_state(EditWishState.price)
     await message.answer(
         "💰 Введи нову ціну:",
-        reply_markup=get_skip_back_keyboard()
+        reply_markup=get_skip_back_cancel_keyboard()
     )
 
 

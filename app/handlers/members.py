@@ -48,7 +48,6 @@ async def show_family_members(
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
 
-    # Тільки редагуємо inline меню
     await cb.message.edit_text(
         "Оберіть члена сім'ї:",
         reply_markup=keyboard
@@ -97,7 +96,6 @@ async def show_member_wishlist(
         )]
     ])
 
-    # Тільки оновлюємо inline меню
     await cb.message.edit_text(
         text,
         reply_markup=keyboard

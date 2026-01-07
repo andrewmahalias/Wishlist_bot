@@ -1,10 +1,14 @@
+import html
+
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, \
+    KeyboardButton
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.family import get_family_by_id
-from app.keyboards.family import families_kb
+from app.keyboards.done import get_done_keyboard
+from app.keyboards.family import families_kb, family_button
 from app.models.models import User
 from app.services.family_service import (
     get_user_families,
@@ -24,11 +28,21 @@ async def family_menu(
 ):
     families = await get_user_families(session, user.id)
 
+    family_reply_kb = ReplyKeyboardMarkup(
+        keyboard=family_button(),
+        resize_keyboard=True
+    )
+
     await message.answer(
         "Оберіть сімʼю:",
+        reply_markup=family_reply_kb
+    )
+
+    temp = await message.answer(
+        "'👇'",
         reply_markup=families_kb(
             [(f.id, f.name) for f in families]
-        )
+        ),
     )
 
 
@@ -68,29 +82,98 @@ async def select_family(cb: CallbackQuery, state: FSMContext, session: AsyncSess
 
 
 @router.callback_query(F.data.startswith("family:invite:"))
-async def show_invite_code(cb: CallbackQuery, session: AsyncSession):
+async def show_invite_code(cb: CallbackQuery, session: AsyncSession, bot):
     family_id = int(cb.data.split(":")[-1])
 
-    # Отримуємо сім'ю
     family = await get_family_by_id(session, family_id)
 
-    # Надсилаємо код окремим повідомленням
+    done_kb = get_done_keyboard()
+
+    # Отримуємо username бота
+    bot_info = await bot.get_me()
+    bot_username = bot_info.username
+
+    # Створюємо deep link
+    invite_link = f"https://t.me/{bot_username}?start=join_{family.invite_code}"
+
+    # Екрануємо назву сімʼї
+    safe_family_name = html.escape(family.name)
+
     await cb.message.answer(
-        f"🔗 Код запрошення в сім'ю «{family.name}»:\n\n"
-        f"━━━━━━━━━━━━━━━\n"
-        f"{family.invite_code}\n"
-        f"━━━━━━━━━━━━━━━\n\n"
-        f"Поділіться цим кодом з людьми, яких хочете запросити. "
-        f"Вони зможуть приєднатись через кнопку '🔗 Приєднатись' в меню сімей."
+        f"🔗 Запрошення в сім'ю «<b>{safe_family_name}</b>»:\n\n"
+        f"<b>Код:</b> <code>{family.invite_code}</code>\n\n"
+        f"<b>Посилання:</b>\n{invite_link}\n\n"
+        f"Поділіться кодом або посиланням з людьми, яких хочете запросити. "
+        f"Вони зможуть приєднатись автоматично або через кнопку '🔗 Приєднатись' в меню сімей.",
+        parse_mode="HTML",
+        reply_markup=done_kb,
+        disable_web_page_preview=True
     )
     await cb.answer()
+
+
+@router.message(F.text == "✅ Готово")
+async def done_handler(message: Message, user: User, session: AsyncSession):
+    families = await get_user_families(session, user.id)
+    family_reply_kb = ReplyKeyboardMarkup(
+        keyboard=family_button(),
+        resize_keyboard=True
+    )
+
+    await message.answer(
+        "Повернення до меню",
+        reply_markup=family_reply_kb
+    )
+
+    await message.answer(
+        "Оберіть сімʼю:",
+        reply_markup=families_kb(
+            [(f.id, f.name) for f in families]
+        )
+    )
 
 
 @router.callback_query(F.data == "family:create")
 async def start_create(cb: CallbackQuery, state: FSMContext):
     await state.set_state(FamilyState.creating)
-    await cb.message.edit_text("Enter family name:")
+
+    cancel_kb = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="❌ Скасувати")]
+        ],
+        resize_keyboard=True
+    )
+
+    await cb.message.answer(
+        "Введіть назву сімʼї:",
+        reply_markup=cancel_kb
+    )
+
     await cb.answer()
+
+
+@router.message(FamilyState.creating, F.text == "❌ Скасувати")
+async def cancel_create(message: Message, state: FSMContext, user: User, session: AsyncSession):
+    await state.clear()
+
+    # Повертаємо звичайну reply-клавіатуру
+    families = await get_user_families(session, user.id)
+    family_reply_kb = ReplyKeyboardMarkup(
+        keyboard=family_button(),
+        resize_keyboard=True
+    )
+
+    await message.answer(
+        "Скасовано",
+        reply_markup=family_reply_kb
+    )
+
+    await message.answer(
+        "Оберіть сімʼю:",
+        reply_markup=families_kb(
+            [(f.id, f.name) for f in families]
+        )
+    )
 
 
 @router.message(FamilyState.creating)
@@ -103,17 +186,61 @@ async def create_family_handler(
     family = await create_family(session, user.id, message.text.strip())
     await state.clear()
 
+    # Повертаємо звичайну reply-клавіатуру після створення
+    family_reply_kb = ReplyKeyboardMarkup(
+        keyboard=family_button(),
+        resize_keyboard=True
+    )
+
     await message.answer(
         f"Сімʼю створено ✅\nКод запрошення: `{family.invite_code}`",
-        parse_mode="Markdown"
+        parse_mode="Markdown",
+        reply_markup=family_reply_kb
     )
 
 
 @router.callback_query(F.data == "family:join")
 async def start_join(cb: CallbackQuery, state: FSMContext):
     await state.set_state(FamilyState.joining)
-    await cb.message.edit_text("Введіть код запрошення:")
+
+    # Оновлюємо reply-клавіатуру на кнопку "Скасувати"
+    cancel_kb = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="❌ Скасувати")]
+        ],
+        resize_keyboard=True
+    )
+
+    await cb.message.answer(
+        "Введіть код запрошення:",
+        reply_markup=cancel_kb
+    )
+
     await cb.answer()
+
+
+@router.message(FamilyState.joining, F.text == "❌ Скасувати")
+async def cancel_join(message: Message, state: FSMContext, user: User, session: AsyncSession):
+    await state.clear()
+
+    # Повертаємо звичайну reply-клавіатуру
+    families = await get_user_families(session, user.id)
+    family_reply_kb = ReplyKeyboardMarkup(
+        keyboard=family_button(),
+        resize_keyboard=True
+    )
+
+    await message.answer(
+        "Скасовано",
+        reply_markup=family_reply_kb
+    )
+
+    await message.answer(
+        "Оберіть сімʼю:",
+        reply_markup=families_kb(
+            [(f.id, f.name) for f in families]
+        )
+    )
 
 
 @router.message(FamilyState.joining)
@@ -130,4 +257,14 @@ async def join_family_handler(
         return
 
     await state.clear()
-    await message.answer(f"Ви приєднались до сімʼї «{family.name}» ✅")
+
+    # Повертаємо звичайну reply-клавіатуру після успішного приєднання
+    family_reply_kb = ReplyKeyboardMarkup(
+        keyboard=family_button(),
+        resize_keyboard=True
+    )
+
+    await message.answer(
+        f"Ви приєднались до сімʼї «{family.name}» ✅",
+        reply_markup=family_reply_kb
+    )

@@ -33,3 +33,7 @@ class FamilyMemberWishState(StatesGroup):
     selecting_member = State()
     viewing = State()
     change_status = State()
+
+
+class SupportStates(StatesGroup):
+    waiting_for_feedback = State()

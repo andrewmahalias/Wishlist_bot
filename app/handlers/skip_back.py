@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.keyboards.my_wishlist import my_wishlist_menu
-from app.keyboards.skip_back_keyboard import get_skip_back_keyboard, get_back_keyboard
+from app.keyboards.skip_back_keyboard import get_skip_back_cancel_keyboard, get_back_keyboard
 from app.states.wishlist_states import AddWishState, EditWishState
 
 router = Router()
@@ -47,7 +47,7 @@ async def skip_step(message: Message, state: FSMContext, session: AsyncSession, 
         await state.set_state(AddWishState.link)
         await message.answer(
             "🔗 Крок 3/4: Додай посилання:",
-            reply_markup=get_skip_back_keyboard()
+            reply_markup=get_skip_back_cancel_keyboard()
         )
 
     elif current == AddWishState.link.state:
@@ -55,7 +55,7 @@ async def skip_step(message: Message, state: FSMContext, session: AsyncSession, 
         await state.set_state(AddWishState.price)
         await message.answer(
             "💰 Крок 4/4: Вкажи ціну:",
-            reply_markup=get_skip_back_keyboard()
+            reply_markup=get_skip_back_cancel_keyboard()
         )
 
     elif current == AddWishState.price.state:
@@ -69,7 +69,7 @@ async def skip_step(message: Message, state: FSMContext, session: AsyncSession, 
         await state.set_state(EditWishState.description)
         await message.answer(
             "📝 Введи новий опис:",
-            reply_markup=get_skip_back_keyboard()
+            reply_markup=get_skip_back_cancel_keyboard()
         )
 
     elif current == EditWishState.description.state:
@@ -78,7 +78,7 @@ async def skip_step(message: Message, state: FSMContext, session: AsyncSession, 
         await state.set_state(EditWishState.link)
         await message.answer(
             "🔗 Введи нове посилання:",
-            reply_markup=get_skip_back_keyboard()
+            reply_markup=get_skip_back_cancel_keyboard()
         )
 
     elif current == EditWishState.link.state:
@@ -87,7 +87,7 @@ async def skip_step(message: Message, state: FSMContext, session: AsyncSession, 
         await state.set_state(EditWishState.price)
         await message.answer(
             "💰 Введи нову ціну:",
-            reply_markup=get_skip_back_keyboard()
+            reply_markup=get_skip_back_cancel_keyboard()
         )
 
     elif current == EditWishState.price.state:
@@ -120,14 +120,14 @@ async def go_back(message: Message, state: FSMContext):
         await state.set_state(AddWishState.description)
         await message.answer(
             "📝 Крок 2/4: Додай опис:",
-            reply_markup=get_skip_back_keyboard()
+            reply_markup=get_skip_back_cancel_keyboard()
         )
 
     elif current == AddWishState.price.state:
         await state.set_state(AddWishState.link)
         await message.answer(
             "🔗 Крок 3/4: Додай посилання:",
-            reply_markup=get_skip_back_keyboard()
+            reply_markup=get_skip_back_cancel_keyboard()
         )
 
     elif current == AddWishState.title.state:
@@ -148,21 +148,21 @@ async def go_back(message: Message, state: FSMContext):
         await state.set_state(EditWishState.title)
         await message.answer(
             "📝 Введи нову назву:",
-            reply_markup=get_skip_back_keyboard()
+            reply_markup=get_skip_back_cancel_keyboard()
         )
 
     elif current == EditWishState.link.state:
         await state.set_state(EditWishState.description)
         await message.answer(
             "📝 Введи новий опис:",
-            reply_markup=get_skip_back_keyboard()
+            reply_markup=get_skip_back_cancel_keyboard()
         )
 
     elif current == EditWishState.price.state:
         await state.set_state(EditWishState.link)
         await message.answer(
             "🔗 Введи нове посилання:",
-            reply_markup=get_skip_back_keyboard()
+            reply_markup=get_skip_back_cancel_keyboard()
         )
 
     elif current == EditWishState.title.state:
