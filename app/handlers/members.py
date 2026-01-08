@@ -28,7 +28,6 @@ async def show_family_members(
         await cb.answer("У сім'ї поки немає інших членів 😔", show_alert=True)
         return
 
-    # Створюємо inline кнопки для кожного члена
     keyboard_buttons = []
     for member in other_members:
         keyboard_buttons.append([
@@ -48,7 +47,6 @@ async def show_family_members(
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
 
-    # Тільки редагуємо inline меню
     await cb.message.edit_text(
         "Оберіть члена сім'ї:",
         reply_markup=keyboard
@@ -97,7 +95,6 @@ async def show_member_wishlist(
         )]
     ])
 
-    # Тільки оновлюємо inline меню
     await cb.message.edit_text(
         text,
         reply_markup=keyboard

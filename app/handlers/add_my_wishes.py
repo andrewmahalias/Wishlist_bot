@@ -1,10 +1,11 @@
+import html
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.keyboards.my_wishlist import my_wishlist_menu
-from app.keyboards.skip_back_keyboard import get_back_keyboard, get_skip_back_keyboard
+from app.keyboards.skip_back_keyboard import get_back_keyboard, get_skip_back_cancel_keyboard
 from app.models.models import User, Wish
 from app.states.wishlist_states import AddWishState
 
@@ -42,7 +43,7 @@ async def process_title(message: Message, state: FSMContext):
     await state.set_state(AddWishState.description)
     await message.answer(
         "📝 Крок 2/4: Додай опис:",
-        reply_markup=get_skip_back_keyboard()
+        reply_markup=get_skip_back_cancel_keyboard()
     )
 
 
@@ -54,7 +55,7 @@ async def process_description(message: Message, state: FSMContext):
     await state.set_state(AddWishState.link)
     await message.answer(
         "🔗 Крок 3/4: Додай посилання:",
-        reply_markup=get_skip_back_keyboard()
+        reply_markup=get_skip_back_cancel_keyboard()
     )
 
 
@@ -66,7 +67,7 @@ async def process_link(message: Message, state: FSMContext):
     await state.set_state(AddWishState.price)
     await message.answer(
         "💰 Крок 4/4: Вкажи ціну:",
-        reply_markup=get_skip_back_keyboard()
+        reply_markup=get_skip_back_cancel_keyboard()
     )
 
 
@@ -113,13 +114,25 @@ async def finalize_add_wish(message: Message, state: FSMContext, session: AsyncS
     # Зберігаємо family_id після clear
     await state.update_data(family_id=family_id)
 
+    # Екрануємо всі дані від користувача
+    safe_title = html.escape(wish.title)
     text = f"✅ Бажання додано!\n\n"
-    text += f"📌 {wish.title}\n"
-    if wish.description:
-        text += f"📝 {wish.description}\n"
-    if wish.link:
-        text += f"🔗 {wish.link}\n"
-    if wish.price:
-        text += f"💰 €{wish.price}"
+    text += f"📌 <b>{safe_title}</b>\n"
 
-    await message.answer(text, reply_markup=my_wishlist_menu())
+    if wish.description:
+        safe_description = html.escape(wish.description)
+        text += f"📝 {safe_description}\n"
+
+    if wish.link:
+        safe_link = html.escape(wish.link)
+        text += f"🔗 {safe_link}\n"
+
+    if wish.price:
+        safe_price = html.escape(str(wish.price))
+        text += f"💰 €{safe_price}"
+
+    await message.answer(
+        text,
+        parse_mode="HTML",
+        reply_markup=my_wishlist_menu()
+    )

@@ -1,3 +1,4 @@
+import html
 from aiogram import Router, F
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
@@ -24,16 +25,15 @@ async def show_my_wishlist_menu(
     family_id = data.get("family_id")
 
     if not family_id:
-        await cb.answer("Спочатку обери сімʼю.", show_alert=True)
+        await cb.answer("Спочатку обери сімʼю", show_alert=True)
         return
 
     # Показуємо повне меню для wishlist
     await cb.message.answer(
-        "Обери дію:",
+        "Обери дію, використовуючи кнопки 👇:",
         reply_markup=my_wishlist_menu()
     )
 
-    # Видаляємо попереднє inline меню
     await cb.message.delete()
     await cb.answer()
 
@@ -49,7 +49,7 @@ async def show_my_wishes(
     family_id = data.get("family_id")
 
     if not family_id:
-        await message.answer("Спочатку обери сімʼю.")
+        await message.answer("Спочатку обери сімʼю")
         return
 
     await state.set_state(WishListState.viewing)
@@ -64,7 +64,7 @@ async def show_my_wishes(
 
     if not wishes:
         await message.answer(
-            "У цій сімʼї у тебе ще немає бажань.",
+            "У цій сімʼї у тебе ще немає бажань",
             reply_markup=my_wishlist_menu(),
         )
         return
@@ -117,18 +117,24 @@ async def show_wish_details(
         await callback.answer("Бажання не знайдено", show_alert=True)
         return
 
-    text = f"<b>{wish.title}</b>\n\n"
+    # Екрануємо всі дані від користувача
+    safe_title = html.escape(wish.title)
+    text = f"<b>{safe_title}</b>\n\n"
 
     if wish.description:
-        text += f"📝 {wish.description}\n\n"
+        safe_description = html.escape(wish.description)
+        text += f"📝 {safe_description}\n\n"
 
     if wish.link:
-        text += f"🔗 <a href='{wish.link}'>Посилання</a>\n\n"
+        # Посилання теж екрануємо, але воно має бути валідним URL
+        safe_link = html.escape(wish.link)
+        text += f"🔗 <a href='{safe_link}'>Посилання</a>\n\n"
 
     if wish.price is not None:
-        text += f"💰 €{wish.price}"
+        # Ціна - це число, але на всяк випадок екрануємо
+        safe_price = html.escape(str(wish.price))
+        text += f"💰 €{safe_price}"
 
-    # Якщо є попереднє повідомлення з деталями - видаляємо його
     if detail_message_id:
         try:
             await callback.bot.delete_message(
@@ -136,9 +142,8 @@ async def show_wish_details(
                 message_id=detail_message_id
             )
         except Exception:
-            pass  # Ігноруємо помилки видалення
+            pass
 
-    # Завжди створюємо нове повідомлення після списку
     sent_msg = await callback.message.answer(
         text,
         reply_markup=get_wishes_details_keyboard(wish),
