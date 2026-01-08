@@ -51,7 +51,6 @@ async def select_family(cb: CallbackQuery, state: FSMContext, session: AsyncSess
     family_id = int(cb.data.split(":")[-1])
     await state.update_data(family_id=family_id)
 
-    # Отримуємо сім'ю з бази
     family = await get_family_by_id(session, family_id)
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -73,7 +72,6 @@ async def select_family(cb: CallbackQuery, state: FSMContext, session: AsyncSess
         ]
     ])
 
-    # Оновлюємо inline меню з назвою сім'ї
     await cb.message.edit_text(
         f"Сім'я «{family.name}» обрана ✅\nОбери дію:",
         reply_markup=keyboard
@@ -82,33 +80,48 @@ async def select_family(cb: CallbackQuery, state: FSMContext, session: AsyncSess
 
 
 @router.callback_query(F.data.startswith("family:invite:"))
-async def show_invite_code(cb: CallbackQuery, session: AsyncSession, bot):
+async def show_invite_code(cb: CallbackQuery, session: AsyncSession, bot, user: User):
     family_id = int(cb.data.split(":")[-1])
 
     family = await get_family_by_id(session, family_id)
 
     done_kb = get_done_keyboard()
 
-    # Отримуємо username бота
     bot_info = await bot.get_me()
     bot_username = bot_info.username
 
-    # Створюємо deep link
     invite_link = f"https://t.me/{bot_username}?start=join_{family.invite_code}"
 
-    # Екрануємо назву сімʼї
     safe_family_name = html.escape(family.name)
+    safe_user_name = html.escape(user.name)
+
+    # Повідомлення для користувача
+    await cb.message.answer(
+        f"🔗 Запрошення в сім'ю «<b>{safe_family_name}</b>»\n\n"
+        f"Перешли наступне повідомлення тим, кого хочеш запросити 👇",
+        parse_mode="HTML",
+        reply_markup=done_kb
+    )
+
+    invite_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text="🎁 Приєднатися до сімʼї",
+                url=invite_link
+            )]
+        ]
+    )
 
     await cb.message.answer(
-        f"🔗 Запрошення в сім'ю «<b>{safe_family_name}</b>»:\n\n"
-        f"<b>Код:</b> <code>{family.invite_code}</code>\n\n"
-        f"<b>Посилання:</b>\n{invite_link}\n\n"
-        f"Поділіться кодом або посиланням з людьми, яких хочете запросити. "
-        f"Вони зможуть приєднатись автоматично або через кнопку '🔗 Приєднатись' в меню сімей.",
+        f"👋 Привіт!\n\n"
+        f"<b>{safe_user_name}</b> запрошує тебе приєднатися до сімʼї «<b>{safe_family_name}</b>» "
+        f"в боті для списків бажань!\n\n"
+        f"🎁 Тут ми ділимося своїми бажаннями та допомагаємо один одному з подарунками.\n\n"
+        f"Натисни на кнопку нижче, щоб приєднатися:",
         parse_mode="HTML",
-        reply_markup=done_kb,
-        disable_web_page_preview=True
+        reply_markup=invite_kb
     )
+
     await cb.answer()
 
 

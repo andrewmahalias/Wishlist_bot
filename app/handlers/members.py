@@ -28,7 +28,6 @@ async def show_family_members(
         await cb.answer("У сім'ї поки немає інших членів 😔", show_alert=True)
         return
 
-    # Створюємо inline кнопки для кожного члена
     keyboard_buttons = []
     for member in other_members:
         keyboard_buttons.append([
