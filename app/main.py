@@ -16,7 +16,7 @@ from app.handlers import (
     skip_back_cancel,
     family,
     members,
-    support,
+    support, admin_notify,
 )
 from app.middlewares.auth import AuthMiddleware
 from app.middlewares.db import DbSessionMiddleware
@@ -63,6 +63,7 @@ async def main():
     dp.include_router(delete_wish.router)
     dp.include_router(edit_wish.router)
     dp.include_router(support.router)
+    dp.include_router(admin_notify.router)
 
     # IMPORTANT PART
     await bot.delete_webhook(drop_pending_updates=True)
