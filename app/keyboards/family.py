@@ -16,8 +16,7 @@ def families_kb(families: list[tuple[int, str]]) -> InlineKeyboardMarkup:
     ]
 
     buttons.append([
-        InlineKeyboardButton(text="➕ Створити сімʼю", callback_data="family:create"),
-        InlineKeyboardButton(text="🔗 Приєднатись", callback_data="family:join"),
+        InlineKeyboardButton(text="➕ Створити сімʼю", callback_data="family:create")
     ])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)

@@ -232,30 +232,6 @@ async def start_join(cb: CallbackQuery, state: FSMContext):
     await cb.answer()
 
 
-@router.message(FamilyState.joining, F.text == "❌ Скасувати")
-async def cancel_join(message: Message, state: FSMContext, user: User, session: AsyncSession):
-    await state.clear()
-
-    # Повертаємо звичайну reply-клавіатуру
-    families = await get_user_families(session, user.id)
-    family_reply_kb = ReplyKeyboardMarkup(
-        keyboard=family_button(),
-        resize_keyboard=True
-    )
-
-    await message.answer(
-        "Скасовано",
-        reply_markup=family_reply_kb
-    )
-
-    await message.answer(
-        "Оберіть сімʼю:",
-        reply_markup=families_kb(
-            [(f.id, f.name) for f in families]
-        )
-    )
-
-
 @router.message(FamilyState.joining)
 async def join_family_handler(
         message: Message,

@@ -3,35 +3,80 @@ from aiogram.types import Message, User
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.crud.family import get_user_families
+from app.keyboards.family import families_kb
 from app.keyboards.my_wishlist import my_wishlist_menu
 from app.keyboards.skip_back_keyboard import get_skip_back_cancel_keyboard, get_back_keyboard
-from app.states.wishlist_states import AddWishState, EditWishState
+from app.states.wishlist_states import AddWishState, EditWishState, FamilyState
 
 router = Router()
 
 
 @router.message(F.text == "❌ Скасувати")
-async def cancel_any_fsm(message: Message, state: FSMContext):
-    """Скасувати будь-який FSM"""
-    current = await state.get_state()
+async def cancel_any_fsm(
+    message: Message,
+    state: FSMContext,
+    session: AsyncSession,
+    user: User,
+):
+    current_state = await state.get_state()
 
-    if current is None:
+    if not current_state:
         return
 
-    # Зберігаємо family_id перед очищенням
     data = await state.get_data()
     family_id = data.get("family_id")
 
     await state.clear()
 
-    # Повертаємо family_id
+    # якщо сімʼя була вибрана — зберігаємо
     if family_id:
         await state.update_data(family_id=family_id)
 
-    await message.answer(
-        "❌ Скасовано",
-        reply_markup=my_wishlist_menu()
-    )
+    # ===== ЛОГІКА ПОВЕРНЕННЯ =====
+
+    # JOIN / CREATE FAMILY
+    if current_state in {
+        FamilyState.joining.state,
+        FamilyState.creating.state,
+    }:
+        families = await get_user_families(session, user.id)
+
+        await message.answer(
+            "❌ Скасовано\n\nОберіть сімʼю:",
+            reply_markup=families_kb(
+                [(f.id, f.name) for f in families]
+            )
+        )
+        return
+    # ADD / EDIT WISH
+    if current_state in {
+        AddWishState.description,
+        AddWishState.link,
+        AddWishState.price,
+        EditWishState.description,
+        EditWishState.link,
+        EditWishState.price,
+    }:
+        await message.answer("❌ Скасовано", reply_markup=my_wishlist_menu())
+        return
+
+
+    # WORKING WITH MY WISHLIST
+    if current_state.startswith("WishListState"):
+        await message.answer(
+            "❌ Скасовано",
+            reply_markup=my_wishlist_menu()
+        )
+        return
+
+    # SUPPORT / FEEDBACK
+    if current_state.startswith("SupportStates"):
+        await message.answer("❌ Скасовано")
+        return
+
+    # FALLBACK
+    await message.answer("❌ Скасовано")
 
 
 @router.message(F.text == "⏭ Пропустити")

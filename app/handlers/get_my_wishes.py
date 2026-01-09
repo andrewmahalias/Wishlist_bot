@@ -1,8 +1,9 @@
 import html
+
 from aiogram import Router, F
-from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,6 +36,46 @@ async def show_my_wishlist_menu(
     )
 
     await cb.message.delete()
+    await cb.answer()
+
+
+@router.callback_query(F.data == "action:back_to_my_wishlist")
+async def back_to_my_wishlist(
+        cb: CallbackQuery,
+        session: AsyncSession,
+        user: User,
+        state: FSMContext,
+):
+    data = await state.get_data()
+    family_id = data.get("family_id")
+
+    if not family_id:
+        await cb.answer("Спочатку обери сімʼю", show_alert=True)
+        return
+
+    await state.set_state(WishListState.viewing)
+
+    result = await session.execute(
+        select(Wish).where(
+            Wish.user_id == user.id,
+            Wish.family_id == family_id,
+        )
+    )
+    wishes = result.scalars().all()
+
+    if not wishes:
+        await cb.message.edit_text(
+            "У цій сімʼї у тебе ще немає бажань",
+            reply_markup=my_wishlist_menu(),
+        )
+        await cb.answer()
+        return
+
+    await cb.message.edit_text(
+        f"📋 <b>Твої бажання ({len(wishes)}):</b>\nНатисни на бажання:",
+        reply_markup=get_wishes_keyboard(wishes),
+        parse_mode="HTML",
+    )
     await cb.answer()
 
 
@@ -85,14 +126,13 @@ async def show_my_wishes(
     F.data.startswith("wish:")
 )
 async def show_wish_details(
-        callback: CallbackQuery,
-        session: AsyncSession,
-        user: User,
-        state: FSMContext,
+    callback: CallbackQuery,
+    session: AsyncSession,
+    user: User,
+    state: FSMContext,
 ):
     data = await state.get_data()
     family_id = data.get("family_id")
-    detail_message_id = data.get("detail_message_id")
 
     if not family_id:
         await callback.answer("Сімʼя не вибрана", show_alert=True)
@@ -117,37 +157,30 @@ async def show_wish_details(
         await callback.answer("Бажання не знайдено", show_alert=True)
         return
 
-    # Екрануємо всі дані від користувача
-    safe_title = html.escape(wish.title)
-    text = f"<b>{safe_title}</b>\n\n"
+    text = f"<b>{html.escape(wish.title)}</b>\n\n"
 
     if wish.description:
-        safe_description = html.escape(wish.description)
-        text += f"📝 {safe_description}\n\n"
+        text += f"📝 {html.escape(wish.description)}\n\n"
 
     if wish.link:
-        # Посилання теж екрануємо, але воно має бути валідним URL
-        safe_link = html.escape(wish.link)
-        text += f"🔗 <a href='{safe_link}'>Посилання</a>\n\n"
+        text += f"🔗 <a href='{html.escape(wish.link)}'>Посилання</a>\n\n"
 
     if wish.price is not None:
-        # Ціна - це число, але на всяк випадок екрануємо
-        safe_price = html.escape(str(wish.price))
-        text += f"💰 €{safe_price}"
+        text += f"💰 €{html.escape(str(wish.price))}"
 
-    if detail_message_id:
-        try:
-            await callback.bot.delete_message(
-                chat_id=callback.message.chat.id,
-                message_id=detail_message_id
-            )
-        except Exception:
-            pass
+    keyboard_builder = InlineKeyboardBuilder.from_markup(
+        get_wishes_details_keyboard(wish)
+    )
+    keyboard_builder.row(
+        InlineKeyboardButton(
+            text="◀️ Назад до списку",
+            callback_data="action:back_to_my_wishlist"
+        )
+    )
 
-    sent_msg = await callback.message.answer(
+    await callback.message.edit_text(
         text,
-        reply_markup=get_wishes_details_keyboard(wish),
+        reply_markup=keyboard_builder.as_markup(),
         parse_mode="HTML",
     )
-    await state.update_data(detail_message_id=sent_msg.message_id)
     await callback.answer()

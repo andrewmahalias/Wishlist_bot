@@ -13,7 +13,7 @@ from app.handlers import (
     get_my_wishes,
     delete_wish,
     edit_wish,
-    skip_back,
+    skip_back_cancel,
     family,
     members,
     support,
@@ -57,7 +57,7 @@ async def main():
     dp.include_router(commands.router)
     dp.include_router(family.router)
     dp.include_router(members.router)
-    dp.include_router(skip_back.router)
+    dp.include_router(skip_back_cancel.router)
     dp.include_router(add_my_wishes.router)
     dp.include_router(get_my_wishes.router)
     dp.include_router(delete_wish.router)
