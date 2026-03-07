@@ -9,6 +9,7 @@ class FamilyState(StatesGroup):
 
 class WishListState(StatesGroup):
     viewing = State()
+    viewing_member = State()
 
 
 class AddWishState(StatesGroup):
