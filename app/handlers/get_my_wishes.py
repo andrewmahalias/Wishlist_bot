@@ -71,9 +71,19 @@ async def back_to_my_wishlist(
         await cb.answer()
         return
 
+    keyboard_builder = InlineKeyboardBuilder.from_markup(
+        get_wishes_keyboard(wishes)
+    )
+    keyboard_builder.row(
+        InlineKeyboardButton(
+            text="◀️ Назад до сімʼї",
+            callback_data=f"family:select:{family_id}"
+        )
+    )
+
     await cb.message.edit_text(
         f"📋 <b>Твої бажання ({len(wishes)}):</b>\nНатисни на бажання:",
-        reply_markup=get_wishes_keyboard(wishes),
+        reply_markup=keyboard_builder.as_markup(),
         parse_mode="HTML",
     )
     await cb.answer()
@@ -110,9 +120,19 @@ async def show_my_wishes(
         )
         return
 
+    keyboard_builder = InlineKeyboardBuilder.from_markup(
+        get_wishes_keyboard(wishes)
+    )
+    keyboard_builder.row(
+        InlineKeyboardButton(
+            text="◀️ Назад до сімʼї",
+            callback_data=f"family:select:{family_id}"
+        )
+    )
+    
     sent_msg = await message.answer(
         f"📋 <b>Твої бажання ({len(wishes)}):</b>\nНатисни на бажання:",
-        reply_markup=get_wishes_keyboard(wishes),
+        reply_markup=keyboard_builder.as_markup(),
         parse_mode="HTML",
     )
 
@@ -173,6 +193,12 @@ async def show_wish_details(
         InlineKeyboardButton(
             text="◀️ Назад до списку",
             callback_data="action:back_to_my_wishlist"
+        )
+    )
+    keyboard_builder.row(
+        InlineKeyboardButton(
+            text="◀️ Назад до сімʼї",
+            callback_data=f"family:select:{family_id}"
         )
     )
 

@@ -22,12 +22,11 @@ async def show_family_members(
         cb: CallbackQuery,
         session: AsyncSession,
         state: FSMContext,
-        user: User  # Додаємо user
+        user: User
 ):
     family_id = int(cb.data.split(":")[-1])
     family_members = await get_family_members(session, family_id)
 
-    # Фільтруємо поточного користувача зі списку
     other_members = [member for member in family_members if member.id != user.id]
 
     if not other_members:
@@ -43,7 +42,6 @@ async def show_family_members(
             )
         ])
 
-    # Додаємо кнопку "Назад"
     keyboard_buttons.append([
         InlineKeyboardButton(
             text="◀️ Назад",
@@ -78,7 +76,6 @@ async def show_member_wishlist(
     )
     member = await get_user_by_id(session, member_id)
 
-    # Зберігаємо member_id у state для подальшого використання
     await state.update_data(viewing_member_id=member_id)
     await state.set_state(WishListState.viewing_member)
 
@@ -124,9 +121,9 @@ async def show_member_wishlist(
     F.data.startswith("wish:")
 )
 async def show_member_wish_details(
-    callback: CallbackQuery,
-    session: AsyncSession,
-    state: FSMContext,
+        callback: CallbackQuery,
+        session: AsyncSession,
+        state: FSMContext,
 ):
     data = await state.get_data()
     family_id = data.get("family_id")
@@ -165,7 +162,6 @@ async def show_member_wish_details(
     if wish.price is not None:
         text += f"💰 €{html.escape(str(wish.price))}"
 
-    # Кнопка назад до wishlist цього члена сімʼї
     back_button = InlineKeyboardButton(
         text="◀️ Назад до списку",
         callback_data=f"member:wishlist:{member_id}"

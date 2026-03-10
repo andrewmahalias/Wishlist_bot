@@ -95,7 +95,6 @@ async def show_invite_code(cb: CallbackQuery, session: AsyncSession, bot, user: 
     safe_family_name = html.escape(family.name)
     safe_user_name = html.escape(user.name)
 
-    # Повідомлення для користувача
     await cb.message.answer(
         f"🔗 Запрошення в сім'ю «<b>{safe_family_name}</b>»\n\n"
         f"Перешли наступне повідомлення тим, кого хочеш запросити 👇",
