@@ -125,10 +125,10 @@ async def show_my_wishes(
     F.data.startswith("wish:")
 )
 async def show_wish_details(
-        callback: CallbackQuery,
-        session: AsyncSession,
-        user: User,
-        state: FSMContext,
+    callback: CallbackQuery,
+    session: AsyncSession,
+    user: User,
+    state: FSMContext,
 ):
     data = await state.get_data()
     family_id = data.get("family_id")
