@@ -117,7 +117,6 @@ async def show_my_wishes(
         parse_mode="HTML",
     )
 
-    # Зберігаємо message_id для подальшого використання
     await state.update_data(wishes_list_message_id=sent_msg.message_id)
 
 
@@ -126,10 +125,10 @@ async def show_my_wishes(
     F.data.startswith("wish:")
 )
 async def show_wish_details(
-    callback: CallbackQuery,
-    session: AsyncSession,
-    user: User,
-    state: FSMContext,
+        callback: CallbackQuery,
+        session: AsyncSession,
+        user: User,
+        state: FSMContext,
 ):
     data = await state.get_data()
     family_id = data.get("family_id")
