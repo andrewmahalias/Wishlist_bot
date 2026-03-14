@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import signal
+import sys
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
@@ -69,7 +71,29 @@ async def main():
     await bot.delete_webhook(drop_pending_updates=True)
     await set_bot_commands(bot)
 
-    await dp.start_polling(bot)
+    # Graceful shutdown handling
+    stop_event = asyncio.Event()
+
+    def signal_handler(signum, frame):
+        logging.info(f"Received signal {signum}, shutting down gracefully...")
+        stop_event.set()
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    # Start polling with graceful shutdown
+    polling_task = asyncio.create_task(dp.start_polling(bot))
+    
+    try:
+        await stop_event.wait()
+        logging.info("Stopping polling...")
+        polling_task.cancel()
+        await bot.session.close()
+        logging.info("Bot stopped gracefully")
+    except asyncio.CancelledError:
+        pass
+    finally:
+        sys.exit(0)
 
 
 if __name__ == "__main__":
