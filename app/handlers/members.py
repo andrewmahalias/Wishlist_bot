@@ -91,30 +91,23 @@ async def show_member_wishlist(
             reply_markup=keyboard
         )
     else:
+        keyboard_builder = InlineKeyboardBuilder.from_markup(
+            get_wishes_keyboard(wishlist)
+        )
+        keyboard_builder.row(
+            InlineKeyboardButton(
+                text="◀️ Назад до списку",
+                callback_data=f"action:family_wishlist:{family_id}"
+            )
+        )
+
         await cb.message.edit_text(
             f"🎁 <b>Wishlist {member.name} ({len(wishlist)}):</b>\nНатисни на бажання:",
-            reply_markup=get_wishes_keyboard(wishlist),
+            reply_markup=keyboard_builder.as_markup(),
             parse_mode="HTML",
         )
 
-    keyboard_builder = InlineKeyboardBuilder.from_markup(
-        get_wishes_keyboard(wishlist)
-    )
-    keyboard_builder.row(
-        InlineKeyboardButton(
-            text="◀️ Назад до сімʼї",
-            callback_data=f"family:select:{family_id}"
-        )
-    )
-
-    await cb.message.edit_text(
-        f"🎁 <b>Wishlist {member.name} ({len(wishlist)}):</b>\nНатисни на бажання:",
-        reply_markup=keyboard_builder.as_markup(),
-        parse_mode="HTML",
-    )
-
     await cb.answer()
-
 
 @router.callback_query(
     WishListState.viewing_member,

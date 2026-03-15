@@ -129,7 +129,7 @@ async def show_my_wishes(
             callback_data=f"family:select:{family_id}"
         )
     )
-    
+
     sent_msg = await message.answer(
         f"📋 <b>Твої бажання ({len(wishes)}):</b>\nНатисни на бажання:",
         reply_markup=keyboard_builder.as_markup(),

@@ -14,10 +14,10 @@ router = Router()
 
 @router.message(F.text == "❌ Скасувати")
 async def cancel_any_fsm(
-    message: Message,
-    state: FSMContext,
-    session: AsyncSession,
-    user: User,
+        message: Message,
+        state: FSMContext,
+        session: AsyncSession,
+        user: User,
 ):
     current_state = await state.get_state()
 
@@ -29,13 +29,9 @@ async def cancel_any_fsm(
 
     await state.clear()
 
-    # якщо сімʼя була вибрана — зберігаємо
     if family_id:
         await state.update_data(family_id=family_id)
 
-    # ===== ЛОГІКА ПОВЕРНЕННЯ =====
-
-    # JOIN / CREATE FAMILY
     if current_state in {
         FamilyState.joining.state,
         FamilyState.creating.state,
@@ -49,7 +45,7 @@ async def cancel_any_fsm(
             )
         )
         return
-    # ADD / EDIT WISH
+
     if current_state in {
         AddWishState.description,
         AddWishState.link,
@@ -61,8 +57,6 @@ async def cancel_any_fsm(
         await message.answer("❌ Скасовано", reply_markup=my_wishlist_menu())
         return
 
-
-    # WORKING WITH MY WISHLIST
     if current_state.startswith("WishListState"):
         await message.answer(
             "❌ Скасовано",
@@ -70,18 +64,15 @@ async def cancel_any_fsm(
         )
         return
 
-    # SUPPORT / FEEDBACK
     if current_state.startswith("SupportStates"):
         await message.answer("❌ Скасовано")
         return
 
-    # FALLBACK
     await message.answer("❌ Скасовано")
 
 
 @router.message(F.text == "⏭ Пропустити")
 async def skip_step(message: Message, state: FSMContext, session: AsyncSession, user: User):
-    """Пропустити крок"""
     current = await state.get_state()
 
     if not current:
@@ -148,7 +139,6 @@ async def skip_step(message: Message, state: FSMContext, session: AsyncSession, 
 
 @router.message(F.text == "🔙 Назад")
 async def go_back(message: Message, state: FSMContext):
-    """Назад на попередній крок"""
     current = await state.get_state()
 
     if not current:
@@ -182,13 +172,12 @@ async def go_back(message: Message, state: FSMContext):
 
         await state.clear()
 
-        # Повертаємо family_id
         if family_id:
             await state.update_data(family_id=family_id)
 
         await message.answer("❌ Скасовано", reply_markup=my_wishlist_menu())
 
-    # EditWish - редагування
+
     elif current == EditWishState.description.state:
         await state.set_state(EditWishState.title)
         await message.answer(
@@ -211,13 +200,12 @@ async def go_back(message: Message, state: FSMContext):
         )
 
     elif current == EditWishState.title.state:
-        # Зберігаємо family_id перед очищенням
+
         data = await state.get_data()
         family_id = data.get("family_id")
 
         await state.clear()
 
-        # Повертаємо family_id
         if family_id:
             await state.update_data(family_id=family_id)
 
