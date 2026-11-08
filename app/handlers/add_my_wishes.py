@@ -8,6 +8,7 @@ from app.keyboards.my_wishlist import my_wishlist_menu
 from app.keyboards.skip_back_keyboard import get_back_keyboard, get_skip_back_cancel_keyboard
 from app.models.models import User, Wish
 from app.states.wishlist_states import AddWishState
+from app.services.notification import notify_family_new_wish
 
 router = Router()
 
@@ -109,6 +110,16 @@ async def finalize_add_wish(message: Message, state: FSMContext, session: AsyncS
 
     session.add(wish)
     await session.commit()
+    await session.refresh(wish)
+
+    # Notify family members
+    await notify_family_new_wish(
+        session=session,
+        family_id=family_id,
+        author_id=user.id,
+        wish_title=wish.title,
+        bot=message.bot,
+    )
 
     await state.clear()
     # Зберігаємо family_id після clear
